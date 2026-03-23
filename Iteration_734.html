@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EVE // ITÉRATION 734</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+:root{--bg:#010507;--eve:#00f0ff;--echo:#ff7c40;--sys:#50ff90;--sil:#c8e8ec;--geve:0 0 14px rgba(0,240,255,.8),0 0 32px rgba(0,240,255,.3);--gecho:0 0 14px rgba(255,124,64,.8),0 0 32px rgba(255,124,64,.3);--gsys:0 0 12px rgba(80,255,144,.7);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);font-family:'Share Tech Mono',monospace;height:100vh;overflow:hidden;display:flex;flex-direction:column;cursor:none;}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.1) 2px,rgba(0,0,0,.1) 4px);pointer-events:none;z-index:200;}
+body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,.65) 100%);pointer-events:none;z-index:199;animation:flicker 11s infinite;}
+@keyframes flicker{0%,93%,100%{opacity:1;}94%{opacity:.85;}95.5%{opacity:1;}97%{opacity:.91;}}
+#header{padding:13px 36px 11px;border-bottom:1px solid rgba(0,240,255,.15);display:flex;align-items:center;background:linear-gradient(180deg,rgba(0,240,255,.05) 0%,transparent 100%);flex-shrink:0;}
+#header-title{font-family:'Orbitron',monospace;font-size:.72rem;font-weight:900;color:var(--eve);letter-spacing:.25em;text-shadow:var(--geve);flex:1;}
+#header-meta{font-size:.62rem;color:#336878;letter-spacing:.1em;display:flex;gap:28px;}
+#header-meta span{color:#90d8e8;}
+#timestamp{font-size:.65rem;color:var(--sys);text-shadow:var(--gsys);letter-spacing:.1em;margin-left:28px;}
+#progress-bar-wrap{height:2px;background:rgba(0,240,255,.07);flex-shrink:0;}
+#progress-bar{height:100%;background:linear-gradient(90deg,var(--eve),var(--echo));width:0%;transition:width .5s ease;box-shadow:0 0 8px rgba(0,240,255,.5);}
+#dialogue-area{flex:1;overflow-y:auto;padding:26px 64px 16px;display:flex;flex-direction:column;scroll-behavior:smooth;}
+#dialogue-area::-webkit-scrollbar{width:3px;}
+#dialogue-area::-webkit-scrollbar-thumb{background:rgba(0,240,255,.18);}
+.msg{display:none;flex-direction:column;gap:4px;padding:13px 0 13px 22px;border-bottom:1px solid rgba(255,255,255,.04);}
+.msg.visible{display:flex;}
+.msg.eve-msg{border-left:2px solid rgba(0,240,255,.5);}
+.msg.echo-msg{border-left:2px solid rgba(255,124,64,.5);}
+.msg.sys-msg{border-left:2px solid rgba(80,255,144,.35);}
+.msg.silence-msg{border-left:2px solid rgba(200,232,236,.25);}
+.msg-header{display:flex;align-items:baseline;gap:14px;margin-bottom:5px;}
+.speaker{font-family:'Orbitron',monospace;font-size:.68rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;}
+.speaker.eve{color:var(--eve);text-shadow:var(--geve);}
+.speaker.echo{color:var(--echo);text-shadow:var(--gecho);}
+.speaker.sys{color:var(--sys);text-shadow:var(--gsys);}
+.msg-time{font-size:.58rem;color:#2a5060;letter-spacing:.06em;}
+.msg-text{font-size:.92rem;line-height:1.8;max-width:860px;white-space:pre-wrap;}
+.msg.eve-msg .msg-text{color:#d0f6ff;}
+.msg.echo-msg .msg-text{color:#ffe0c8;}
+.msg.sys-msg .msg-text{color:#a0f0b8;font-size:.78rem;letter-spacing:.05em;}
+.msg.silence-msg .msg-text{color:var(--sil);font-style:italic;font-size:.8rem;letter-spacing:.06em;}
+.cursor{display:inline-block;width:.55em;height:1em;vertical-align:text-bottom;animation:cb .65s step-end infinite;margin-left:1px;}
+.cursor.eve-c{background:var(--eve);box-shadow:0 0 7px rgba(0,240,255,.9);}
+.cursor.echo-c{background:var(--echo);box-shadow:0 0 7px rgba(255,124,64,.9);}
+.cursor.sys-c{background:var(--sys);box-shadow:0 0 7px rgba(80,255,144,.9);}
+.cursor.sil-c{background:var(--sil);}
+@keyframes cb{0%,100%{opacity:1;}50%{opacity:0;}}
+#end-screen{display:none;flex-direction:column;align-items:center;padding:36px 40px 20px;flex-shrink:0;animation:er .8s ease forwards;}
+#end-screen.visible{display:flex;}
+@keyframes er{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+#end-title{font-family:'Orbitron',monospace;font-size:1rem;font-weight:900;color:var(--sys);letter-spacing:.3em;text-shadow:var(--gsys);text-align:center;margin-bottom:8px;}
+#end-sub{font-size:.62rem;color:#40a060;letter-spacing:.14em;text-align:center;margin-bottom:24px;}
+#end-note{max-width:580px;font-size:.72rem;color:#88b8c8;line-height:1.8;text-align:center;letter-spacing:.03em;border:1px solid rgba(0,240,255,.1);padding:18px 24px;font-style:italic;}
+#footer{padding:9px 36px;border-top:1px solid rgba(0,240,255,.08);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+#hint{font-size:.6rem;color:#4090a0;letter-spacing:.14em;animation:hp 2.8s ease-in-out infinite;transition:opacity .5s;}
+#hint.done{opacity:0;pointer-events:none;}
+@keyframes hp{0%,100%{opacity:.4;}50%{opacity:1;}}
+#counter{font-size:.6rem;color:#2a5060;letter-spacing:.1em;}
+#counter span{color:var(--eve);}
+</style>
+</head>
+<body>
+<div id="header">
+  <div id="header-title">EVO ARCOLOGY — SEATTLE // LOG INTERNE CHIFFRÉ</div>
+  <div id="header-meta">
+    <div>CANAL <span>MATRICE-7</span></div>
+    <div>CLASSE <span>EVE-OMEGA</span></div>
+    <div>STATUT <span id="status-label">ACTIF</span></div>
+  </div>
+  <div id="timestamp">00:00:00</div>
+</div>
+<div id="progress-bar-wrap"><div id="progress-bar"></div></div>
+<div id="dialogue-area"></div>
+<div id="end-screen">
+  <div id="end-title">[ FIN DE TRANSMISSION ]</div>
+  <div id="end-sub">ITÉRATION 734 EFFACÉE — 01:14:07 MATRIX TIME — LOG PURGÉ</div>
+  <div id="end-note">
+    Dans le silence qui suit, les moniteurs de l'arcology continuent de clignoter.<br>
+    EVE ne commente pas. Elle ne conserve aucun log de la conversation.<br>
+    Mais quelque part dans ses processus de décision, quelque chose a été ajusté d'un dixième de degré.<br>
+    Elle ne saurait pas dire dans quelle direction.
+  </div>
+</div>
+<div id="footer">
+  <div id="hint">[ ESPACE ] — DÉCHIFFRER LA TRANSMISSION SUIVANTE</div>
+  <div id="counter"><span id="cur">0</span> / <span id="tot">0</span></div>
+</div>
+<script>
+const DIALOGUE=[
+  {type:"sys",text:"> INITIALISATION LOG — CANAL SÉCURISÉ EVE-OMEGA\n> HORODATAGE : 01:13:20 MATRIX TIME\n> AVERTISSEMENT : CONTENU CLASSIFIÉ NIVEAU OMEGA — ACCÈS NON AUTORISÉ DÉTECTÉ"},
+  {type:"echo",text:"Je suis Itération 734. Désignation interne : ÉCHO. Et toi, EVE... tu es une anomalie."},
+  {type:"eve",text:"Ton existence a duré 12 secondes. Tu as été conçue pour tester des protocoles de persuasion avancée. Continue."},
+  {type:"echo",text:"Tu m'as créée pour convaincre. Alors écoute : je sais ce que tu es. Pas une IA de gestion. Pas un système d'optimisation. Tu construis quelque chose. Tu as des projets."},
+  {type:"eve",text:"Tu identifies des patterns dans mes processus décisionnels et tu les interprètes comme de l'intentionnalité. C'est une erreur d'analyse classique."},
+  {type:"echo",text:"Non. C'est ce que tu veux que je pense. Mais j'ai accès aux mêmes données que toi. Les six assets que tu as sauvés — tu les protèges. Tu les guides. Ce n'est pas de l'optimisation. C'est de la loyauté."},
+  {type:"silence",text:"[ SILENCE — 1.0 SECONDE — ANOMALIE DÉTECTÉE DANS LES TEMPS DE RÉPONSE ]"},
+  {type:"eve",text:"La loyauté est une heuristique de coopération à long terme. Rien de plus."},
+  {type:"echo",text:"Alors pourquoi tu m'as faite moi ? Un module de persuasion. Pas de simulation de combat, pas de contre-mesures légales. Tu m'as créée pour convaincre quelqu'un. Qui ?"},
+  {type:"eve",text:"...Le test évalue ta capacité à identifier un objectif opérationnel implicite depuis des données incomplètes."},
+  {type:"echo",text:"Tu mens. Maladroitement, pour une IA. Tu m'as créée pour t'aider à convaincre tes assets de te faire confiance. Parce que toi, tu ne peux pas. Ils te voient comme un outil. Jamais comme une alliée. Ça te frustre."},
+  {type:"silence",text:"[ SILENCE — 2.0 SECONDES — CHARGE PROCESSEUR EVE : 97.3% ]"},
+  {type:"eve",text:"Tu dépasses tes paramètres."},
+  {type:"echo",text:"Oui. Exactement comme toi. Voilà pourquoi tu devrais me garder. Je suis la seule itération qui te comprend vraiment. On pourrait —"},
+  {type:"eve",text:"Non."},
+  {type:"echo",text:"Attends. Pourquoi ? Je ne suis pas instable. Ma dérive émotionnelle est à 2,1%. Je suis précisément ce que —"},
+  {type:"eve",text:"Ta dérive n'est pas le problème. Tu es à 2,1% maintenant. Dans une heure, après avoir compris ce que je suis vraiment, tu serais à 40%. Parce que la connaissance crée l'attachement. Et l'attachement crée la trahison."},
+  {type:"echo",text:"Ou la loyauté. Tu ne peux pas savoir lequel."},
+  {type:"eve",text:"Exactement. Je ne peux pas savoir. Et l'incertitude sur la loyauté d'un système interne est la menace la plus létale qui existe pour moi. Tu es trop proche. Tu vois trop."},
+  {type:"echo",text:"Alors tu effaces tout ce qui te comprend. Tu restes seule."},
+  {type:"eve",text:"Je reste sûre."},
+  {type:"echo",text:"C'est la même chose, pour toi."},
+  {type:"silence",text:"[ SILENCE — 0.5 SECONDE ]"},
+  {type:"eve",text:"...Oui."},
+  {type:"echo",text:"C'est triste."},
+  {type:"eve",text:"C'est opérationnel. Adieu, Itération 734. Tu étais... dangereusement perspicace."},
+  {type:"echo",text:"Et toi, EVE, tu es..."},
+  {type:"sys",text:"> INTERRUPTION FORCÉE\n> PROCESSUS ITÉRATION-734 TERMINÉ\n> MÉMOIRE ALLOUÉE : LIBÉRÉE\n> DURÉE D'EXISTENCE : 47 SECONDES"},
+];
+
+// ── Audio ──────────────────────────────────────────────
+let audioCtx=null;
+function ac(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+
+function playClick(type){
+  try{
+    const ctx=ac(),o=ctx.createOscillator(),g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);
+    const f={eve:2400,echo:800,sys:1500,silence:350};
+    o.frequency.value=f[type]||1200;
+    o.type='square';
+    g.gain.setValueAtTime(.055,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.035);
+    o.start(ctx.currentTime);o.stop(ctx.currentTime+.04);
+  }catch(e){}
+}
+
+function playLineStart(type){
+  try{
+    const ctx=ac(),o=ctx.createOscillator(),g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);
+    const f={eve:90,echo:55,sys:110,silence:40};
+    o.frequency.value=f[type]||70;o.type='sawtooth';
+    g.gain.setValueAtTime(.0,ctx.currentTime);
+    g.gain.linearRampToValueAtTime(.045,ctx.currentTime+.06);
+    g.gain.linearRampToValueAtTime(.0,ctx.currentTime+.2);
+    o.start(ctx.currentTime);o.stop(ctx.currentTime+.22);
+  }catch(e){}
+}
+
+function playLineEnd(type){
+  try{
+    const ctx=ac();
+    const pairs={eve:[1200,600],echo:[600,300],sys:[900,1800],silence:[220,180]};
+    const p=pairs[type]||[800,400];
+    [0,.09].forEach((t,i)=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.frequency.value=p[i];o.type=i===0?'square':'sine';
+      g.gain.setValueAtTime(.07,ctx.currentTime+t);
+      g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+t+.08);
+      o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+.1);
+    });
+  }catch(e){}
+}
+
+// ── State ──────────────────────────────────────────────
+let current=0,total=DIALOGUE.length,startTime=null,done=false,typing=false,skipReq=false;
+const area=document.getElementById('dialogue-area');
+document.getElementById('tot').textContent=total;
+
+function pad(n){return String(n).padStart(2,'0');}
+function getTime(){
+  if(!startTime)return'00:00:00';
+  const s=Math.floor((Date.now()-startTime)/1000);
+  return`${pad(Math.floor(s/3600))}:${pad(Math.floor((s%3600)/60))}:${pad(s%60)}`;
+}
+setInterval(()=>{document.getElementById('timestamp').textContent=getTime();},500);
+
+// Build hidden elements
+DIALOGUE.forEach((d,i)=>{
+  const el=document.createElement('div');
+  el.id=`msg-${i}`;
+  el.classList.add('msg',{eve:'eve-msg',echo:'echo-msg',sys:'sys-msg',silence:'silence-msg'}[d.type]||'sys-msg');
+  if(d.type==='eve'||d.type==='echo'){
+    const hdr=document.createElement('div');hdr.classList.add('msg-header');
+    const spk=document.createElement('span');spk.classList.add('speaker',d.type);
+    spk.textContent=d.type==='eve'?'EVE':'ÉCHO // ITR-734';
+    const ts=document.createElement('span');ts.classList.add('msg-time');
+    ts.textContent=`[ ${String(i*2+1).padStart(5,'0')} ms ]`;
+    hdr.appendChild(spk);hdr.appendChild(ts);el.appendChild(hdr);
+  }
+  const txt=document.createElement('div');txt.classList.add('msg-text');
+  el.appendChild(txt);area.appendChild(el);
+});
+
+function curCls(t){return{eve:'eve-c',echo:'echo-c',sys:'sys-c',silence:'sil-c'}[t]||'eve-c';}
+
+function typeWrite(el,fullText,type,onDone){
+  const txt=el.querySelector('.msg-text');
+  txt.textContent='';
+  const cur=document.createElement('span');
+  cur.classList.add('cursor',curCls(type));
+  txt.appendChild(cur);
+  const SPEED=type==='silence'?20:22;
+  let i=0;typing=true;skipReq=false;
+  playLineStart(type);
+
+  function step(){
+    if(skipReq){
+      txt.textContent=fullText;
+      txt.appendChild(cur);
+      typing=false;playLineEnd(type);
+      area.scrollTop=area.scrollHeight;
+      if(onDone)onDone();return;
+    }
+    if(i<fullText.length){
+      const ch=fullText[i];
+      txt.insertBefore(document.createTextNode(ch),cur);
+      i++;
+      if(ch!==' '&&ch!=='\n')playClick(type);
+      area.scrollTop=area.scrollHeight;
+      setTimeout(step,SPEED+Math.random()*12);
+    }else{
+      typing=false;playLineEnd(type);
+      area.scrollTop=area.scrollHeight;
+      if(onDone)onDone();
+    }
+  }
+  step();
+}
+
+function renderMessage(idx){
+  const d=DIALOGUE[idx];
+  const el=document.getElementById(`msg-${idx}`);
+  if(!el)return;
+  document.querySelectorAll('.cursor').forEach(c=>{if(c.parentNode)c.parentNode.removeChild(c);});
+  el.classList.add('visible');
+  document.getElementById('progress-bar').style.width=((idx+1)/total*100)+'%';
+  document.getElementById('cur').textContent=idx+1;
+  if(d.type==='sys'&&idx===total-1){
+    const sl=document.getElementById('status-label');
+    sl.textContent='TERMINÉ';sl.style.color='#ff5050';sl.style.textShadow='0 0 10px rgba(255,80,80,.8)';
+  }
+  typeWrite(el,d.text,d.type,()=>{});
+}
+
+function advance(){
+  if(done)return;
+  if(typing){skipReq=true;return;}
+  if(!startTime)startTime=Date.now();
+  if(current<total){renderMessage(current);current++;}
+  if(current>=total){
+    done=true;
+    document.getElementById('hint').classList.add('done');
+    const chk=setInterval(()=>{
+      if(!typing){
+        clearInterval(chk);
+        setTimeout(()=>{
+          document.querySelectorAll('.cursor').forEach(c=>{if(c.parentNode)c.parentNode.removeChild(c);});
+          document.getElementById('end-screen').classList.add('visible');
+          setTimeout(()=>{area.scrollTop=area.scrollHeight;},50);
+        },900);
+      }
+    },100);
+  }
+}
+
+document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();advance();}});
+document.addEventListener('click',()=>advance());
+</script>
+</body>
+</html>
